@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artab - New Tab, New Art</title>
+    <link rel="icon" type="image/svg+xml" href="/static/icon.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/static/icon.svg" />
+    <script src="/static/js/alpinejs-3-14-7.js" defer></script>
+    <link rel="stylesheet" href="./artab.css?v=20241211" />
+  </head>
+  <body>
+    <div x-data="artTab" class="page-container">
+      <!-- 左侧导航区域 -->
+      <div class="navigation-area left" @click="previousArt">
+        <button class="navigation-button">
+          <span>←</span>
+        </button>
+      </div>
+
+      <!-- 主要艺术品展示区域 -->
+      <div class="artwork-container" :class="{ 'visible': containerVisible }">
+        <div class="frame-wrapper">
+          <div class="art-frame">
+            <template x-if="loading">
+              <div
+                class="loading-container"
+                :style="`aspect-ratio: ${getCurrentDimensions().width}/${getCurrentDimensions().height}`">
+                <div class="loading-spinner"></div>
+              </div>
+            </template>
+
+            <template x-if="error">
+              <div
+                class="loading-container"
+                :style="`aspect-ratio: ${getCurrentDimensions().width}/${getCurrentDimensions().height}`">
+                <div class="error-message" x-text="error"></div>
+              </div>
+            </template>
+
+            <template x-if="!loading && !error && currentArt">
+              <img
+                :src="currentArt.image"
+                :alt="currentArt.title"
+                :style="`aspect-ratio: ${getCurrentDimensions().width}/${getCurrentDimensions().height}`"
+                class="art-image"
+                @load="handleImageLoad" />
+            </template>
+          </div>
+        </div>
+
+        <!-- 把两个卡片放在同一个容器内 -->
+        <div class="info-cards">
+          <template x-if="currentArt && !error && !loading">
+            <div>
+              <div class="art-info">
+                <h2 class="info-title">
+                  <a :href="currentArt.link" target="_blank" x-text="currentArt.title"></a>
+                </h2>
+                <p class="info-text">
+                  <a :href="currentArt.artist_link" target="_blank" x-text="currentArt.creator"></a>
+                </p>
+                <p class="info-text">
+                  <a :href="currentArt.attribution_link" target="_blank" x-text="currentArt.attribution"></a>
+                </p>
+              </div>
+              <div class="chrome-download">
+                <a :href="getStoreLink()" class="chrome-download-button">
+                  <img :src="getBrowserIcon()" :alt="getBrowserName()" class="chrome-icon" />
+                  <span x-text="getButtonText()"></span>
+                </a>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 右侧导航区域 -->
+      <div class="navigation-area right" @click="nextArt">
+        <button class="navigation-button">
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+    <script src="./artab.js?v=20241211"></script>
+  </body>
+</html>

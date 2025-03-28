@@ -1,0 +1,50 @@
+{
+  "extensionDescription": {
+    "description": "Art gallery extension",
+    "message": "Get Inspired by the World's Greatest Artworks in Every Tab."
+  },
+  "request_timeout": {
+    "message": "Request timed out. This service needs to access image resources from Google Arts & Culture. Please make sure your network can access Google.",
+    "description": "Request timeout error message"
+  },
+  "loading": {
+    "message": "Loading...",
+    "description": "Loading state text"
+  },
+  "changeArtWork": {
+    "message": "Change Artwork",
+    "description": "Title of artwork update settings"
+  },
+  "everyNewTab": {
+    "message": "Update on every new tab",
+    "description": "Update frequency option - every new tab"
+  },
+  "daily": {
+    "message": "Update every day",
+    "description": "Update frequency option - daily"
+  },
+  "everyHour": {
+    "message": "Update every hour",
+    "description": "Update frequency option - hourly"
+  },
+  "every10Min": {
+    "message": "Update every 10 minutes",
+    "description": "Update frequency option - every 10 minutes"
+  },
+  "error": {
+    "message": "Error occurred",
+    "description": "Error state text"
+  },
+  "feedback": {
+    "message": "Feedback",
+    "description": "Feedback link text"
+  },
+  "sourceCode": {
+    "message": "Source Code",
+    "description": "Source code link text"
+  },
+  "version": {
+    "message": "Version: $1",
+    "description": "Version number display"
+  }
+}

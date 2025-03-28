@@ -1,0 +1,51 @@
+{
+  "request_timeout": {
+    "message": "请求超时，本服务需要访问谷歌艺术馆的图片资源，请确保你的网络可以访问谷歌。",
+    "description": "请求超时错误信息"
+  },
+  "extensionDescription": {
+    "description": "扩展描述",
+    "message": "让有史以来最好的艺术作品出现在你的新标签页"
+  },
+  "changeArtWork": {
+    "message": "更换艺术作品",
+    "description": "更新设置标题"
+  },
+  "everyNewTab": {
+    "message": "每个新标签页",
+    "description": "更新频率选项 - 每个新标签页"
+  },
+  "daily": {
+    "message": "每天",
+    "description": "更新频率选项 - 每天"
+  },
+  "everyHour": {
+    "message": "每小时",
+    "description": "更新频率选项 - 每小时"
+  },
+  "every10Min": {
+    "message": "每 10 分钟",
+    "description": "更新频率选项 - 每10分钟"
+  },
+  "loading": {
+    "message": "加载中...",
+    "description": "加载状态文本"
+  },
+  "error": {
+    "message": "发生错误",
+    "description": "错误状态文本"
+  },
+
+  "feedback": {
+    "message": "问题反馈",
+    "description": "反馈链接文本"
+  },
+  "sourceCode": {
+    "message": "源代码",
+    "description": "源代码链接文本"
+  },
+  "version": {
+    "message": "版本：$1",
+    "description": "版本号显示"
+  }
+}

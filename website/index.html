@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artab: Get Inspired by the World's Greatest Artworks in Every New Tab</title>
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/static/logo.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/static/icon.svg" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://artab.owenyoung.com/">
+    <meta property="og:title" content="Artab: Get Inspired by the World's Greatest Artworks in Every New Tab">
+    <meta property="og:description" content="Transform your browser into a private art gallery. Experience a new masterpiece with every tab.">
+    <meta property="og:image" content="/static/freedom.webp">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://artab.owenyoung.com/">
+    <meta name="twitter:title" content="Artab: Get Inspired by the World's Greatest Artworks in Every New Tab">
+    <meta name="twitter:description" content="Transform your browser into a private art gallery. Experience a new masterpiece with every tab.">
+    <meta name="twitter:image" content="/static/freedom.webp">
+
+    <!-- 其他 meta -->
+    <meta name="description" content="Transform your browser into a private art gallery. Experience a new masterpiece with every tab.">
+    <meta name="keywords" content="new tab, art, browser extension, Chrome extension, Firefox extension, Edge extension">
+    
+    <script src="/static/js/alpinejs-3-14-7.js" defer></script>
+    <link rel="stylesheet" href="index.css?v=20241215">
+</head>
+<body x-data="{ 
+    activeTab: 0,
+    translations: {
+        'en': {
+            headerTitle: 'Get Inspired by the World\'s Greatest Artworks in Every New Tab.',
+            addTo: 'Add to',
+            newTab: 'New Tab',
+            title: 'Artab: Get Inspired by the World\'s Greatest Artworks in Every New Tab',
+            description: 'Transform your browser into a private art gallery. Experience a new masterpiece with every tab.',
+            keywords: 'new tab, art, browser extension, Chrome extension, Firefox extension, Edge extension'
+        },
+        'zh-CN': {
+            headerTitle: '让有史以来最好的艺术作品出现在你的新标签页。',
+            addTo: '添加到',
+            newTab: '新标签页',
+            title: 'Artab: 让有史以来最好的艺术作品出现在你的新标签页',
+            description: '每次打开新标签页，都能欣赏到精选的艺术作品。让浏览器成为你的私人艺术馆。',
+            keywords: '新标签页, 艺术, 浏览器扩展, Chrome 扩展, Firefox 扩展, Edge 扩展'
+        },
+        'zh-TW': {
+            headerTitle: '讓有史以來最好的藝術作品出現在你的新標籤頁。',
+            addTo: '添加至',
+            newTab: '新標籤頁',
+            title: 'Artab: 讓有史以來最好的藝術作品出現在你的新標籤頁',
+            description: '每次打開新標籤頁，都能欣賞到精選的藝術作品。讓瀏覽器成為你的私人藝術館。',
+            keywords: '新標籤頁, 藝術, 瀏覽器擴展, Chrome 擴展, Firefox 擴展, Edge 擴展'
+        }
+    },
+    currentLang: '',
+    isLoading: true,
+    startAutoSwitch() {
+        setInterval(() => {
+            this.activeTab = (this.activeTab + 1) % 3;
+        }, 1500);
+    }
+}" 
+x-init="
+    (() => {
+        // 获取浏览器语言
+        const browserLang = navigator.language.toLowerCase();
+        currentLang = 'en';
+        
+        if (browserLang.startsWith('zh')) {
+            currentLang = browserLang.includes('tw') || browserLang.includes('hk') ? 'zh-TW' : 'zh-CN';
+        }
+        
+        document.documentElement.lang = currentLang;
+        
+        // 更新 meta 标签
+        const t = translations[currentLang];
+        document.title = t.title;
+        document.querySelector('meta[name=\'description\']').setAttribute('content', t.description);
+        document.querySelector('meta[name=\'keywords\']').setAttribute('content', t.keywords);
+        document.querySelector('meta[property=\'og:title\']').setAttribute('content', t.title);
+        document.querySelector('meta[property=\'og:description\']').setAttribute('content', t.description);
+        document.querySelector('meta[name=\'twitter:title\']').setAttribute('content', t.title);
+        document.querySelector('meta[name=\'twitter:description\']').setAttribute('content', t.description);
+        
+        setTimeout(() => {
+            isLoading = false;
+        }, 300);
+        
+        startAutoSwitch();
+    })()
+"
+x-cloak>
+    <!-- 添加加载过渡效果 -->
+    <div x-show="isLoading" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div x-show="!isLoading" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         class="container">
+        <div class="page-header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1 class="header-title" x-text="translations[currentLang].headerTitle"></h1>
+                    <p class="header-source">
+                        — <a href="https://github.com/get-artab/artab" target="_blank" style="text-decoration: none; color: inherit;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Artab</a>
+                    </p>
+                </div>
+                <div x-data="browserInfo()">
+                    <a :href="storeUrl" class="chrome-button">
+                        <img :src="'static/' + browserIcon" :alt="browserName">
+                        <span x-text="translations[currentLang].addTo + ' ' + browserName"></span>
+                        <svg class="arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.33337 8H12.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 3.33331L12.6667 7.99998L8 12.6666" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 原有的浏览器窗口内容 -->
+        <div class="browser-window">
+            <div class="browser-header">
+                <div class="window-controls">
+                    <div class="control close"></div>
+                    <div class="control minimize"></div>
+                    <div class="control maximize"></div>
+                </div>
+
+                <div class="tabs">
+                    <template x-for="(tab, index) in ['New Tab 1', 'New Tab 2', 'New Tab 3']">
+                        <div 
+                            class="tab" 
+                            :class="{ 'active': activeTab === index }"
+                            @click="activeTab = index"
+                            x-text="tab"
+                        ></div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Tab 1 -->
+                <template x-if="activeTab === 0">
+                    <div class="tab-content" x-show="activeTab === 0" x-transition>
+                    
+                            <div class="artwork-container">
+                                <div class="frame-wrapper">
+                                    <div class="art-frame">
+                                        <img 
+                                            class="art-image" 
+                                            src="/static/freedom.webp"
+                                            alt="Freedom"
+                                            style="aspect-ratio: 640/426;"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="art-info">
+                                    <h2 class="info-title">
+                                        <a href="https://www.google.com/search?q=Freedom+by+Icy+%26+Sot" target="_blank" class="art-link">
+                                            Freedom
+                                        </a>
+                                    </h2>
+                                    <p class="info-text">
+                                        <a href="https://artsandculture.google.com/entity/t219j505c03" target="_blank" class="art-link">
+                                            Icy & Sot
+                                        </a>
+                                    </p>
+                                    <p class="info-text">
+                                        <a href="partner/street-art-museum-amsterdam" target="_blank" class="art-link">
+                                            Street Art Museum Amsterdam
+                                        </a>
+                                    </p>
+                            
+                    </div>
+                </div>
+            </template>
+
+            <!-- Tab 2 -->
+            <template x-if="activeTab === 1">
+                <div class="tab-content" x-show="activeTab === 1" x-transition>
+                    
+                            <div class="artwork-container">
+                                <div class="frame-wrapper">
+                                    <div class="art-frame">
+                                        <img 
+                                            class="art-image" 
+                                            src="/static/2.jpg"
+                                            alt="House in Provence"
+                                            style="aspect-ratio: 1920/1554;"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="art-info">
+                                    <h2 class="info-title">
+                                        <a href="https://www.google.com/search?q=House+in+Provence+by+Paul+C%C3%A9zanne" target="_blank" class="art-link">
+                                            House in Provence
+                                        </a>
+                                    </h2>
+                                    <p class="info-text">
+                                        <a href="https://www.google.com/search?q=Paul+C%C3%A9zanne" target="_blank" class="art-link">
+                                          Paul Cézanne 
+                                        </a>
+                                    </p>
+                                    <p class="info-text">
+                                        <a href="partner/indianapolis-museum-of-art" target="_blank" class="art-link">
+                                            Indianapolis Museum of Art at Newfields
+                                        </a>
+                                    </p>
+                       
+                    </div>
+                </div>
+            </template>
+
+            <!-- Tab 3 -->
+            <template x-if="activeTab === 2">
+                <div class="tab-content" x-show="activeTab === 2" x-transition>
+                 
+                            <div class="artwork-container">
+                                <div class="frame-wrapper">
+                                    <div class="art-frame">
+                                        <img 
+                                            class="art-image" 
+                                            src="/static/3.jpg"
+                                            alt="Festa Escolar no Ipiranga"
+                                            style="aspect-ratio: 1920/1269;"
+                                        >
+                                    </div>
+                                </div>
+                                <div class="art-info">
+                                    <h2 class="info-title">
+                                        <a href="https://www.google.com/search?q=Festa+Escolar+no+Ipiranga+by+Agust%C3%ADn+Salinas+y+Teruel" target="_blank" class="art-link">
+                                            Festa Escolar no Ipiranga
+                                        </a>
+                                    </h2>
+                                    <p class="info-text">
+                                        <a href="https://www.google.com/search?q=Agust%C3%ADn+Salinas+y+Teruel" target="_blank" class="art-link">
+                                            Agustín Salinas y Teruel
+                                        </a>
+                                    </p>
+                                    <p class="info-text">
+                                        <a href="partner/pinacoteca-do-estado-de-sao-paulo" target="_blank" class="art-link">
+                                            Pinacoteca de São Paulo
+                                        </a>
+                                    </p>
+                                </div>
+                           
+                </div>
+            </template>
+        </div>
+    </div>
+    <script>
+        function browserInfo() {
+            const ua = navigator.userAgent;
+            let browserName = 'Chrome';
+            let browserIcon = 'chrome.png';
+            let buttonText = 'Add to Chrome';
+            let storeUrl = 'https://chromewebstore.google.com/detail/artab-new-tab-new-art/cphdjiacoelggmgfopmgmljdnhmlhici';
+
+            if (ua.includes('Firefox')) {
+                browserName = 'Firefox';
+                browserIcon = 'firefox.png';
+                buttonText = 'Add to Firefox';
+                storeUrl = 'https://addons.mozilla.org/en-US/firefox/addon/artab/';
+            } else if (ua.includes('Edg')) {
+                browserName = 'Edge';
+                browserIcon = 'edge.png';
+                buttonText = 'Add to Edge';
+                storeUrl = 'https://microsoftedge.microsoft.com/addons/detail/artab-new-tab-with-art/cioaigkjcjchlohhapcdnldoggnmpmih';
+            }
+
+            return {
+                browserName,
+                browserIcon,
+                buttonText,
+                storeUrl
+            };
+        }
+    </script>
+</body>
+</html>

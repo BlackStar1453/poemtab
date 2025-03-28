@@ -1,0 +1,51 @@
+{
+  "request_timeout": {
+    "message": "請求超時，本服務需要訪問谷歌藝術館的圖片資源，請確保你的網絡可以訪問谷歌。",
+    "description": "請求超時錯誤信息"
+  },
+  "extensionDescription": {
+    "description": "擴展描述",
+    "message": "讓有史以來最好的藝術作品出現在你的新分頁"
+  },
+  "changeArtWork": {
+    "message": "更換藝術作品",
+    "description": "更新設置標題"
+  },
+  "everyNewTab": {
+    "message": "每個新標籤頁",
+    "description": "更新頻率選項 - 每個新標籤頁"
+  },
+  "daily": {
+    "message": "每天更新",
+    "description": "更新頻率選項 - 每天"
+  },
+  "everyHour": {
+    "message": "每小時更新",
+    "description": "更新頻率選項 - 每小時"
+  },
+  "every10Min": {
+    "message": "每10分鐘更新",
+    "description": "更新頻率選項 - 每10分鐘"
+  },
+  "loading": {
+    "message": "載入中...",
+    "description": "載入狀態文字"
+  },
+  "error": {
+    "message": "發生錯誤",
+    "description": "錯誤狀態文字"
+  },
+
+  "feedback": {
+    "message": "題反饋",
+    "description": "反饋鏈接文本"
+  },
+  "sourceCode": {
+    "message": "原始碼",
+    "description": "源代碼鏈接文本"
+  },
+  "version": {
+    "message": "版本：$1",
+    "description": "版本�顯示"
+  }
+}
