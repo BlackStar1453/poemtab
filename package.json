@@ -1,10 +1,10 @@
 {
-  "name": "artab",
-  "version": "2024.12.21",
-  "description": "Get Inspiration from the World's Greatest Artworks Every Time You Open a New Tab",
+  "name": "poemtab",
+  "version": "2025.03.29",
+  "description": "Read Poem Every Time You Open a New Tab",
   "repository": {
     "type": "git",
-    "url": "https://github.com/theowenyoung/artab.git"
+    "url": "https://github.com/BlackStar1453/poemtab"
   },
   "type": "module",
   "scripts": {

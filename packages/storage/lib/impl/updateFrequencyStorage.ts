@@ -1,4 +1,4 @@
-import { Storage } from '../storage';
+import { Storage } from '../';
 
 type UpdateFrequency = 'every_tab' | 'every_10min' | 'every_hour' | 'every_day';
 
@@ -10,3 +10,4 @@ type UpdateFrequency = 'every_tab' | 'every_10min' | 'every_hour' | 'every_day';
  * every_day: 每天更新
  */
 export const updateFrequencyStorage = new Storage<UpdateFrequency>('updateFrequency', 'every_tab');
+

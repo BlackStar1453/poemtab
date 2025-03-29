@@ -1,6 +1,6 @@
 import '@src/Options.css';
 import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
-import { updateFrequencyStorage } from '@extension/storage';
+import { updateFrequencyStorage, poemLanguageStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 import packageJson from '../../../package.json';
 
@@ -17,6 +17,7 @@ const ExternalLink = () => (
 
 const Options = () => {
   const updateFrequency = useStorage(updateFrequencyStorage);
+  const poemLanguage = useStorage(poemLanguageStorage);
 
   return (
     <div className="options-container">
@@ -65,6 +66,31 @@ const Options = () => {
               onChange={e => updateFrequencyStorage.set(e.target.value as any)}
             />
             <span>{t('daily')}</span>
+          </label>
+        </div>
+
+        <h2 className="options-title" style={{ marginTop: '30px' }}>{'poemLanguageSettings'}</h2>
+        <div className="radio-group" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <label className="radio-item">
+            <input
+              type="radio"
+              name="poem_language"
+              value="chinese"
+              checked={poemLanguage === 'chinese'}
+              onChange={e => poemLanguageStorage.set(e.target.value as any)}
+            />
+            <span>{'chinesePoems'}</span>
+          </label>
+
+          <label className="radio-item">
+            <input
+              type="radio"
+              name="poem_language"
+              value="english"
+              checked={poemLanguage === 'english'}
+              onChange={e => poemLanguageStorage.set(e.target.value as any)}
+            />
+            <span>{'englishPoems'}</span>
           </label>
         </div>
 

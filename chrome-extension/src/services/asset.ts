@@ -1,17 +1,16 @@
-import { meta } from '@extension/shared';
+import { poemLanguageStorage } from '@extension/storage';
 /**
  * 类型定义
  */
 export interface AssetData {
-  artist_link: string;
-  attribution: string;
-  attribution_link: string;
-  creator: string;
-  image: string;
-  link: string;
-  source: string;
   title: string;
-  data_url?: string;
+  content: string;
+  author: string;
+  dynasty?: string;
+  translation?: string;
+  source?: string;
+  link?: string;
+  language?: 'chinese' | 'english';
 }
 
 type CacheType = 'all' | 'images' | 'metadata';
@@ -108,170 +107,22 @@ async function dbClear(storeName: string): Promise<void> {
   });
 }
 
-async function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
-}
-
-function composeLink(link: string): string {
-  return link.startsWith('http') ? link : `${API_CONFIG.baseUrl}${link}`;
-}
 
 /**
  * 核心功能函数
  */
-async function loadImageDataUrl(imageUrl: string): Promise<string> {
-  const cachedDataUrl = await dbRead<string>(DB_CONFIG.stores.images, imageUrl);
-  if (cachedDataUrl) return cachedDataUrl;
 
-  const response = await fetch(imageUrl, {
-    method: 'GET',
-    headers: {
-      Accept: 'image/*',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.statusText}`);
-  }
-
-  const blob = await response.blob();
-  const dataUrl = await blobToDataUrl(blob);
-  await dbWrite(DB_CONFIG.stores.images, imageUrl, dataUrl);
-
-  return dataUrl;
-}
-
-/**
- * 获取资源列表
- */
-function getAssetList(): AssetData[] {
-  return [...meta];
-}
 
 // 内存缓存相关
 const memoryCache: Map<string, string> = new Map();
 
-// 添加全局的 preloadPromise
-let preloadPromise: Promise<void> | null = null;
 
-// 预加载图片
-export async function preloadImages(currentIndex: number): Promise<void> {
-  // 如果已经在预加载中，返回现有的 Promise
-  if (preloadPromise) {
-    return preloadPromise;
-  }
 
-  preloadPromise = (async () => {
-    const promises: Promise<void>[] = [];
-
-    for (let i = 1; i <= API_CONFIG.preloadCount; i++) {
-      const index = (currentIndex + i) % meta.length;
-      const imageUrl = meta[index].image;
-
-      // 如果已经在内存缓存中，跳过
-      if (memoryCache.has(imageUrl)) {
-        continue;
-      }
-
-      promises.push(
-        loadImageDataUrl(imageUrl)
-          .then(dataUrl => {
-            // 添加到内存缓存
-            memoryCache.set(imageUrl, dataUrl);
-            // 如果缓存太大，删除最旧的
-            if (memoryCache.size > MEMORY_CACHE_SIZE) {
-              const firstKey = memoryCache.keys().next().value;
-              memoryCache.delete(firstKey);
-            }
-          })
-          .catch(error => {
-            console.error(`Failed to preload image at index ${index}:`, error);
-          }),
-      );
-    }
-
-    await Promise.allSettled(promises);
-    preloadPromise = null;
-  })();
-
-  return preloadPromise;
-}
-
-// 修改 getImage 函数，优先从内存缓存获取
-export async function getImage(index: number): Promise<AssetData> {
-  const assets = getAssetList();
-  if (index < 0 || index >= assets.length) {
-    throw new Error(`Invalid index: ${index}`);
-  }
-
-  const asset = assets[index];
-  const imageUrl = `${asset.image}`;
-
-  // 获取图片数据
-  const dataUrl = await getImageDataUrl(imageUrl);
-
-  const processedAsset = {
-    ...asset,
-    data_url: dataUrl,
-    artist_link: composeLink(asset.artist_link),
-    attribution_link: composeLink(asset.attribution_link),
-    link: composeLink(asset.link),
-  };
-
-  return processedAsset;
-}
-
-// 修改 getImageDataUrl 函数，使用简单的字符串缓存
-export async function getImageDataUrl(imageUrl: string): Promise<string> {
-  // 先检查内存缓存
-  const cachedDataUrl = memoryCache.get(imageUrl);
-  if (cachedDataUrl) {
-    return cachedDataUrl;
-  }
-
-  // 再检查 IndexedDB 缓存
-  const cachedData = await dbRead<string>(DB_CONFIG.stores.images, imageUrl);
-  if (cachedData) {
-    // 添加到内存缓存
-    memoryCache.set(imageUrl, cachedData);
-    // 如果缓存太大，删除最旧的
-    if (memoryCache.size > MEMORY_CACHE_SIZE) {
-      const firstKey = memoryCache.keys().next().value;
-      memoryCache.delete(firstKey);
-    }
-    return cachedData;
-  }
-
-  // 如果都没有，则加载并缓存
-  const dataUrl = await loadImageDataUrl(imageUrl);
-
-  // 保存到内存缓存
-  memoryCache.set(imageUrl, dataUrl);
-  // 如果缓存太大，删除最旧的
-  if (memoryCache.size > MEMORY_CACHE_SIZE) {
-    const firstKey = memoryCache.keys().next().value;
-    memoryCache.delete(firstKey);
-  }
-
-  return dataUrl;
-}
 
 // 获取/设置当前索引
 export async function getCurrentIndex(): Promise<number> {
   const index = await dbRead<string>(DB_CONFIG.stores.metadata, STORAGE_KEYS.currentIndex);
   return index ? parseInt(index) : 0;
-}
-
-// 修改 setCurrentIndex 函数，添加预加载
-export async function setCurrentIndex(index: number): Promise<void> {
-  await dbWrite(DB_CONFIG.stores.metadata, STORAGE_KEYS.currentIndex, index.toString());
-  // 触发预加载
-  preloadImages(index).catch(console.error);
 }
 
 // 修改 clearCache 函数，同时清除内存缓存
@@ -298,3 +149,400 @@ export const TEST_ONLY = {
   API_CONFIG,
   STORAGE_KEYS,
 };
+
+const SAMPLE_POEMS: AssetData[] = [
+  {
+    title: "静夜思",
+    content: "床前明月光，\n疑是地上霜。\n举头望明月，\n低头思故乡。",
+    author: "李白",
+    dynasty: "唐",
+    translation: "夜深人静的时候，看见月光洒在窗前的地上，好像地上结了一层白霜。抬头仰望那明亮的月亮，低头不禁想起远方的家乡。",
+    source: "全唐诗",
+    link: "https://so.gushiwen.cn/shiwenv_45c396367f59.aspx"
+  },
+  {
+    title: "登鹳雀楼",
+    content: "白日依山尽，\n黄河入海流。\n欲穷千里目，\n更上一层楼。",
+    author: "王之涣",
+    dynasty: "唐",
+    translation: "夕阳依傍着山脉慢慢地沉没，黄河朝着东海滚滚地奔流。如果想要看到千里之外的风光，那就要再登上一层楼。",
+    source: "全唐诗",
+    link: "https://so.gushiwen.cn/shiwenv_c90ff9ea5a71.aspx"
+  },
+  {
+    title: "春晓",
+    content: "春眠不觉晓，\n处处闻啼鸟。\n夜来风雨声，\n花落知多少。",
+    author: "孟浩然",
+    dynasty: "唐",
+    translation: "春天里睡得正香，不知不觉天已破晓。四处都能听到鸟儿在歌唱。夜里刮风下雨的声音很响，不知道有多少花儿被风雨打落。",
+    source: "全唐诗",
+    link: "https://so.gushiwen.cn/shiwenv_5744c8530a77.aspx"
+  },
+  {
+    title: "相思",
+    content: "红豆生南国，\n春来发几枝？\n愿君多采撷，\n此物最相思。",
+    author: "王维",
+    dynasty: "唐",
+    translation: "红豆生长在南方，春天来临时长出多少枝？希望你多采摘一些，因为这是最能表达相思之情的东西。",
+    source: "全唐诗",
+    link: "https://so.gushiwen.cn/shiwenv_6d23f9ea661b.aspx"
+  },
+  {
+    title: "望庐山瀑布",
+    content: "日照香炉生紫烟，\n遥看瀑布挂前川。\n飞流直下三千尺，\n疑是银河落九天。",
+    author: "李白",
+    dynasty: "唐",
+    translation: "阳光照射着香炉峰，峰顶升起紫色的烟云。远远望去，庐山的瀑布挂在山前的溪流上。瀑布飞流直泻三千尺，好像是银河从九天之上倾泻而下。",
+    source: "全唐诗",
+    link: "https://so.gushiwen.cn/shiwenv_4c6721b21a9f.aspx"
+  }
+]
+
+
+/**
+ * 今日诗词 API 配置与相关函数
+ */
+const POEM_API_CONFIG = {
+  baseUrl: 'https://v1.jinrishici.com',
+  defaultCategory: 'all',
+  format: 'json',
+  timeout: 5000,  // 5秒超时
+} as const;
+
+/**
+ * PoetryDB API 配置
+ */
+const POETRYDB_API_CONFIG = {
+  baseUrl: 'https://poetrydb.org',
+  endpoints: {
+    random: '/random/1',
+    author: '/author',
+    title: '/title',
+    lineCount: '/linecount'
+  },
+  // 预选的著名诗人
+  featuredAuthors: [
+    'William Shakespeare',
+    'Emily Dickinson',
+    'Robert Frost',
+    'Walt Whitman',
+    'Edgar Allan Poe',
+    'William Wordsworth',
+    'John Keats',
+    'Percy Bysshe Shelley',
+    'Maya Angelou',
+    'Sylvia Plath'
+  ]
+} as const;
+
+// 从 API 获取随机诗词 - 修复网络请求
+export async function getRandomPoem(): Promise<AssetData> {
+  console.log('[诗词服务] 开始获取随机诗词');
+  
+  try {
+    // 使用代理URL避免CORS问题，或直接使用正确的API地址
+    const url = `https://v1.jinrishici.com/all.json`;
+    console.log(`[诗词服务] 请求URL: ${url}`);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), POEM_API_CONFIG.timeout);
+    
+    const response = await fetch(url, { 
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': chrome.runtime.getURL(''),
+        'Referer': 'https://v1.jinrishici.com/'
+      },
+      credentials: 'omit',
+      mode: 'cors'
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('[诗词服务] API响应数据:', data);
+    
+    // 转换为我们的数据格式 - 根据实际返回格式调整
+    const poem: AssetData = {
+      title: data.origin || '无题',
+      content: data.content,
+      author: data.author || '佚名',
+      dynasty: '',  // API没有返回朝代
+      source: '今日诗词 API',
+      link: `https://www.jinrishici.com/`,
+      language: 'chinese'
+    };
+    
+    console.log(`[诗词服务] 成功获取到诗词: ${poem.content}`);
+    return poem;
+  } catch (error) {
+    console.error('[诗词服务] API 请求失败:', error);
+    throw new Error(`无法获取诗词数据: ${error.message}`);
+  }
+}
+
+// 按分类获取诗词
+export async function getPoemByCategory(category: string): Promise<AssetData> {
+  console.log(`[诗词服务] 获取分类诗词: ${category}`);
+  
+  try {
+    const url = `${POEM_API_CONFIG.baseUrl}/${category}.${POEM_API_CONFIG.format}`;
+    console.log(`[诗词服务] 请求URL: ${url}`);
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // 转换为我们的数据格式
+    const poem: AssetData = {
+      title: data.origin ? data.origin : '无题',
+      content: data.content,
+      author: data.author || '佚名',
+      dynasty: data.dynasty || '',
+      source: '今日诗词 API',
+      link: `https://www.jinrishici.com/`,
+      language: 'chinese'
+    };
+    
+    return poem;
+  } catch (error) {
+    console.error(`[诗词服务] 获取分类 ${category} 失败:`, error);
+    throw new Error(`无法获取分类诗词数据: ${error.message}`);
+  }
+}
+
+// 获取指定索引的诗词函数
+export async function getPoem(index: number): Promise<AssetData> {
+  console.log(`[诗词服务] 获取指定索引诗词: ${index}`);
+  
+  // 如果索引为 -1，返回随机诗词
+  if (index === -1) {
+    return getRandomPoem();
+  }
+  
+  // 如果索引有效，返回本地样本中的诗词
+  if (index >= 0 && index < SAMPLE_POEMS.length) {
+    return SAMPLE_POEMS[index];
+  }
+  
+  // 索引无效，抛出错误
+  console.warn(`[诗词服务] 无效的索引: ${index}`);
+  throw new Error(`无效的诗词索引: ${index}`);
+}
+
+/**
+ * 从PoetryDB获取随机英文诗歌
+ */
+async function fetchEnglishPoem(): Promise<AssetData> {
+  console.log('[诗词服务] 获取英文诗歌');
+  
+  try {
+    // 尝试从PoetryDB获取随机诗歌
+    const url = `${POETRYDB_API_CONFIG.baseUrl}${POETRYDB_API_CONFIG.endpoints.random}`;
+    console.log(`[诗词服务] 请求英文诗歌URL: ${url}`);
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`PoetryDB API请求失败: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      throw new Error('无效的PoetryDB响应数据');
+    }
+    
+    const poem = data[0];
+    
+    // 将PoetryDB的响应格式转换为我们的数据格式
+    const formattedPoem: AssetData = {
+      title: poem.title || 'Untitled',
+      content: Array.isArray(poem.lines) ? poem.lines.join('\n') : poem.lines,
+      author: poem.author || 'Unknown',
+      source: 'PoetryDB',
+      link: `https://poetrydb.org/title/${encodeURIComponent(poem.title)}`,
+      language: 'english'
+    };
+    
+    console.log('[诗词服务] 成功获取英文诗歌:', formattedPoem.title);
+    return formattedPoem;
+  } catch (error) {
+    console.error('[诗词服务] 获取英文诗歌失败:', error);
+    throw new Error(`无法获取英文诗歌数据: ${error.message}`);
+  }
+}
+
+/**
+ * 获取特定作者的英文诗歌
+ */
+async function fetchPoemByAuthor(author: string): Promise<AssetData> {
+  try {
+    const encodedAuthor = encodeURIComponent(author);
+    const url = `${POETRYDB_API_CONFIG.baseUrl}${POETRYDB_API_CONFIG.endpoints.author}/${encodedAuthor}/title,author,lines`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status}`);
+    }
+    
+    const poems = await response.json();
+    if (!Array.isArray(poems) || poems.length === 0) {
+      throw new Error(`未找到${author}的诗歌`);
+    }
+    
+    // 随机选择一首该作者的诗
+    const randomIndex = Math.floor(Math.random() * poems.length);
+    const poem = poems[randomIndex];
+    
+    return {
+      title: poem.title,
+      content: Array.isArray(poem.lines) ? poem.lines.join('\n') : poem.lines,
+      author: poem.author,
+      source: 'PoetryDB',
+      link: `https://poetrydb.org/author/${encodedAuthor}/title,author,lines`,
+      language: 'english'
+    };
+  } catch (error) {
+    console.error(`[诗词服务] 获取${author}的诗歌失败:`, error);
+    throw new Error(`无法获取${author}的诗歌数据: ${error.message}`);
+  }
+}
+
+/**
+ * 获取指定行数的英文诗歌
+ */
+async function fetchPoemByLineCount(lineCount: number): Promise<AssetData> {
+  try {
+    const url = `${POETRYDB_API_CONFIG.baseUrl}${POETRYDB_API_CONFIG.endpoints.lineCount}/${lineCount}/title,author,lines`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status}`);
+    }
+    
+    const poems = await response.json();
+    if (!Array.isArray(poems) || poems.length === 0) {
+      throw new Error(`未找到${lineCount}行的诗歌`);
+    }
+    
+    // 随机选择一首
+    const randomIndex = Math.floor(Math.random() * poems.length);
+    const poem = poems[randomIndex];
+    
+    return {
+      title: poem.title,
+      content: Array.isArray(poem.lines) ? poem.lines.join('\n') : poem.lines,
+      author: poem.author,
+      source: 'PoetryDB',
+      link: `https://poetrydb.org/linecount/${lineCount}`,
+      language: 'english'
+    };
+  } catch (error) {
+    console.error(`[诗词服务] 获取${lineCount}行的诗歌失败:`, error);
+    throw new Error(`无法获取${lineCount}行的诗歌数据: ${error.message}`);
+  }
+}
+
+
+// 修改 getRandomPoem 函数支持多语言
+export async function getRandomPoemWithLanguage(): Promise<AssetData> {
+  // 获取用户的语言偏好
+  const languagePref = await poemLanguageStorage.get();
+  
+  console.log(`[诗词服务] 获取随机诗词，语言: ${languagePref}`);
+  
+  if (languagePref === 'english') {
+    return fetchEnglishPoem();
+  } else {
+    // 使用现有的中文诗词获取逻辑
+    console.log('[诗词服务] 获取中文诗词');
+    try {
+      // 原有的中文诗词获取逻辑
+      const url = `https://v1.jinrishici.com/all.json`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      const poem: AssetData = {
+        title: data.origin || '无题',
+        content: data.content,
+        author: data.author || '佚名',
+        dynasty: '',
+        source: '今日诗词 API',
+        link: `https://www.jinrishici.com/`,
+        language: 'chinese'
+      };
+      
+      return poem;
+    } catch (error) {
+      console.error('[诗词服务] 获取中文诗词失败:', error);
+      throw new Error(`无法获取中文诗词数据: ${error.message}`);
+    }
+  }
+}
+
+// 修改 getPoemByCategory 函数支持多语言
+export async function getPoemByCategoryWithLanguage(category: string): Promise<AssetData> {
+  const languagePref = await poemLanguageStorage.get();
+  
+  console.log(`[诗词服务] 获取分类诗词: ${category}, 语言: ${languagePref}`);
+  
+  if (languagePref === 'english') {
+    // 对英文诗歌，分类处理方式不同
+    if (category.startsWith('author/')) {
+      // 如果是作者分类
+      const author = category.replace('author/', '');
+      return fetchPoemByAuthor(author);
+    } else if (category.startsWith('linecount/')) {
+      // 如果是行数分类
+      const lineCount = parseInt(category.replace('linecount/', ''));
+      return fetchPoemByLineCount(lineCount);
+    } else if (category === 'random' || category === 'all') {
+      // 随机诗歌
+      return fetchEnglishPoem();
+    } else {
+      // 默认返回随机诗歌
+      return fetchEnglishPoem();
+    }
+  } else {
+    // 使用原有的中文诗词分类逻辑
+    try {
+      const url = `${POEM_API_CONFIG.baseUrl}/${category}.${POEM_API_CONFIG.format}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      const poem: AssetData = {
+        title: data.origin || '无题',
+        content: data.content,
+        author: data.author || '佚名',
+        dynasty: data.dynasty || '',
+        source: '今日诗词 API',
+        link: `https://www.jinrishici.com/`,
+        language: 'chinese'
+      };
+      
+      return poem;
+    } catch (error) {
+      console.error('[诗词服务] 获取中文分类诗词失败:', error);
+      throw new Error(`无法获取中文分类诗词数据: ${error.message}`);
+    }
+  }
+}

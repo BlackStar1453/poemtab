@@ -30,6 +30,8 @@ const updateFrequency = createStorage<UpdateFrequency>('update-frequency-storage
   liveUpdate: true,
 });
 
+export const poemLanguageStorage = createStorage<'chinese' | 'english'>('poem_language', 'chinese')
+
 export const updateFrequencyStorage: BaseStorage<UpdateFrequency> = {
   ...updateFrequency,
 };

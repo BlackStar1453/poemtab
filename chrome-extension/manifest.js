@@ -13,11 +13,11 @@ const manifest = {
    * if you want to support multiple languages, you can use the following reference
    * https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Internationalization
    */
-  name: 'Artab: New Tab, New Art',
+  name: 'Poemtab',
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
   permissions: ['storage'],
-  host_permissions: ['https://artab-files.owenyoung.com/*'],
+  host_permissions: ['https://artab-files.owenyoung.com/*', 'https://v1.jinrishici.com/*'],
   options_ui: {
     page: 'options/index.html',
     open_in_tab: false, // 改为false，使其在弹出窗口中打开
