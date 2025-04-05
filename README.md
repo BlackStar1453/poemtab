@@ -6,9 +6,7 @@ Display one poem when you open a new tab
 
 ## Download
 
-- [Chrome Web Store](https://chromewebstore.google.com/detail/artab-new-tab-new-art/cphdjiacoelggmgfopmgmljdnhmlhici)
-- [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/artab/)
-- [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/artab-new-tab-with-art/cioaigkjcjchlohhapcdnldoggnmpmih)
+- [Chrome Web Store](https://chromewebstore.google.com/detail/poemtab/eopmhmcdppkcdnmkkhiolhkabkddbcdb)
 
 
 
